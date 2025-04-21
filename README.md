@@ -1,7 +1,7 @@
 
-# Surface Pen Button Mapper
+# Surface Stylus Button Mapper for Linux
 
-This script remaps the Surface Pen buttons to specific keyboard shortcuts. It listens for the events from the Surface Pen and triggers corresponding actions based on the button pressed. 
+This script remaps the buttons of a Microsoft Surface Stylus to specific keyboard shortcuts in Linux. It listens for the events from the Surface Pen and triggers corresponding actions based on the button pressed. 
 
 The mapping works as follows:
 - **Single-click (Meta+F20)**: Triggers `Ctrl+C` (copy).
