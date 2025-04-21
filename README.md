@@ -57,20 +57,26 @@ sudo nano /etc/systemd/system/pen-remap.service
 2. Paste the following content into the service file:
 
 ```ini
+
 [Unit]
 Description=Surface Pen Button Mapper
-After=multi-user.target
+After=bluetooth.target
+Wants=bluetooth.target
 
 [Service]
-ExecStart=/usr/bin/python3 /home/your-username/Documents/GitHub/Surface-pen-mapping/remap_meta_fx.py
+ExecStart=/usr/bin/python3 /path/to/your/project/repo/pen-remap.py
+WorkingDirectory=/path/to/your/project/repo/
 Restart=always
-User=your-username
-Group=input
-WorkingDirectory=/home/your-username/Documents/GitHub/Surface-pen-mapping
-Environment=DISPLAY=:0
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+User=your_user
+Environment=DISPLAY=:0  # Set DISPLAY for graphical applications
+Environment=PYTHONUNBUFFERED=1  # Disables output buffering
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
+
 ```
 
 3. Reload systemd to apply the changes:
