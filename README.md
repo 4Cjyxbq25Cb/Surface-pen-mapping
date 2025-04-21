@@ -103,3 +103,11 @@ The script should now run automatically after a reboot.
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Yo
+This work builds on the work of 
+qzed Maximilian Luz,
+PhilDevProg PhilProg,
+and KTibow Kendell R 
+and the repo linux-surface-pen-button-remap.
+
