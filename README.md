@@ -24,7 +24,7 @@ pip install evdev
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/Surface-pen-mapping.git
+git clone https://github.com/4Cjyxbq25Cb/Surface-pen-mapping.git
 cd Surface-pen-mapping
 ```
 
