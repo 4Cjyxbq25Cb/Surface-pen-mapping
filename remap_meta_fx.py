@@ -13,14 +13,14 @@ TARGET_PRODUCT = 0x0921
 
 
 def find_pen_device():
-    for path in list_devices():
+    devices = [InputDevice(p) for p in list_devices()]
+
+    for dev in devices:
         try:
-            dev = InputDevice(path)
-
             if dev.info.vendor == TARGET_VENDOR and dev.info.product == TARGET_PRODUCT:
-                print(f"🎯 Gerät verbunden: {dev.name} ({path})")
-                return dev
-
+                if "Surface Pen" in dev.name:
+                    print(f"🎯 Pen gefunden: {dev.name} ({dev.path})")
+                    return dev
         except Exception:
             continue
 
@@ -40,7 +40,11 @@ def send_keys(keys, ui):
 
 
 def handle_device(dev):
-    dev.grab()
+    try:
+        dev.grab()
+    except Exception:
+        print("⚠️ Konnte Device nicht grabben")
+        return
 
     all_keys = set()
     for combo in KEYMAP.values():
@@ -50,8 +54,8 @@ def handle_device(dev):
 
     print("✅ Eingabegerät aktiv – warte auf Eingaben…")
 
-    while True:
-        try:
+    try:
+        while True:
             r, _, _ = select([dev.fd], [], [], 0.1)
             if not r:
                 continue
@@ -61,41 +65,37 @@ def handle_device(dev):
                 if event.type != ecodes.EV_KEY:
                     continue
 
-                code = event.code
-                value = event.value
-
-                # nur Key-Down Events
-                if value != 1:
+                # nur key press
+                if event.value != 1:
                     continue
 
-                if code in KEYMAP:
-                    keys_to_send = KEYMAP[code]
-                    print(f"🔁 {ecodes.KEY.get(code, code)} → {keys_to_send}")
-                    send_keys(keys_to_send, ui)
+                if event.code in KEYMAP:
+                    keys = KEYMAP[event.code]
+                    print(f"🔁 {ecodes.KEY.get(event.code, event.code)} -> {keys}")
+                    send_keys(keys, ui)
 
-        except (OSError, IOError):
-            print("⚠️ Gerät getrennt. Suche erneut…")
-            try:
-                dev.ungrab()
-            except Exception:
-                pass
-            break
+    except (OSError, IOError):
+        print("⚠️ Gerät getrennt")
 
 
 def main():
     print("🔄 Starte Pen-Mapper. Warte auf Gerät…")
 
-    while True:
-        dev = find_pen_device()
+    try:
+        while True:
+            dev = find_pen_device()
 
-        if dev:
-            try:
-                handle_device(dev)
-            except Exception as e:
-                print(f"❌ Fehler: {e}")
-                time.sleep(2)
-        else:
-            time.sleep(2)
+            if dev:
+                try:
+                    handle_device(dev)
+                except Exception as e:
+                    print(f"❌ Fehler: {e}")
+                    time.sleep(2)
+            else:
+                time.sleep(1)
+
+    except KeyboardInterrupt:
+        print("\n🛑 Beendet")
 
 
 if __name__ == "__main__":
