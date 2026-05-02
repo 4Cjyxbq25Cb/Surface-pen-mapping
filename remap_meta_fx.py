@@ -1,30 +1,14 @@
 import time
-from evdev import InputDevice, ecodes, list_devices, UInput
+from evdev import InputDevice, ecodes, UInput
 from select import select
 
 KEYMAP = {
-    ecodes.KEY_F20: [ecodes.KEY_LEFTCTRL, ecodes.KEY_C],       # Single-click
-    ecodes.KEY_F19: [ecodes.KEY_LEFTCTRL, ecodes.KEY_V],       # Double-click
-    ecodes.KEY_F18: [ecodes.KEY_LEFTCTRL, ecodes.KEY_PAGEUP],  # Hold
+    ecodes.KEY_F20: [ecodes.KEY_LEFTCTRL, ecodes.KEY_C],
+    ecodes.KEY_F19: [ecodes.KEY_LEFTCTRL, ecodes.KEY_V],
+    ecodes.KEY_F18: [ecodes.KEY_LEFTCTRL, ecodes.KEY_PAGEUP],
 }
 
-TARGET_VENDOR = 0x045e
-TARGET_PRODUCT = 0x0921
-
-
-def find_pen_device():
-    for p in list_devices():
-        try:
-            dev = InputDevice(p)
-
-            if dev.info.vendor == TARGET_VENDOR and dev.info.product == TARGET_PRODUCT:
-                print(f"🎯 Pen gefunden: {dev.name} ({dev.path})")
-                return dev
-
-        except Exception:
-            continue
-
-    return None
+DEVICE_PATH = "/dev/input/event20"
 
 
 def send_keys(keys, ui):
@@ -39,66 +23,38 @@ def send_keys(keys, ui):
     ui.syn()
 
 
-def handle_device(dev):
+def main():
+    print("🔄 Starte Pen-Mapper...")
+
     try:
+        dev = InputDevice(DEVICE_PATH)
         dev.grab()
-    except Exception:
-        print("⚠️ Konnte Device nicht grabben")
-        return
 
-    all_keys = set()
-    for combo in KEYMAP.values():
-        all_keys.update(combo)
+        all_keys = set()
+        for combo in KEYMAP.values():
+            all_keys.update(combo)
 
-    ui = UInput({ecodes.EV_KEY: list(all_keys)})
+        ui = UInput({ecodes.EV_KEY: list(all_keys)})
 
-    print("✅ Eingabegerät aktiv – warte auf Eingaben…")
+        print("✅ Aktiv:", dev.name)
 
-    try:
         while True:
             r, _, _ = select([dev.fd], [], [], 0.1)
             if not r:
                 continue
 
             for event in dev.read():
+                if event.type == ecodes.EV_KEY and event.value == 1:
 
-                if event.type != ecodes.EV_KEY:
-                    continue
-
-                if event.value != 1:
-                    continue
-
-                if event.code in KEYMAP:
-                    keys = KEYMAP[event.code]
-                    print(f"🔁 {ecodes.KEY.get(event.code, event.code)} -> {keys}")
-                    send_keys(keys, ui)
-
-    except (OSError, IOError):
-        print("⚠️ Gerät getrennt")
-        try:
-            dev.ungrab()
-        except Exception:
-            pass
-
-
-def main():
-    print("🔄 Starte Pen-Mapper. Warte auf Gerät…")
-
-    try:
-        while True:
-            dev = find_pen_device()
-
-            if dev:
-                try:
-                    handle_device(dev)
-                except Exception as e:
-                    print(f"❌ Fehler: {e}")
-                    time.sleep(2)
-            else:
-                time.sleep(1)
+                    if event.code in KEYMAP:
+                        print("🔁", event.code)
+                        send_keys(KEYMAP[event.code], ui)
 
     except KeyboardInterrupt:
         print("\n🛑 Beendet")
+
+    except Exception as e:
+        print("❌ Fehler:", e)
 
 
 if __name__ == "__main__":
