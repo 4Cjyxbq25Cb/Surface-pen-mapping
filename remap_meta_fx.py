@@ -13,14 +13,14 @@ TARGET_PRODUCT = 0x0921
 
 
 def find_pen_device():
-    devices = [InputDevice(p) for p in list_devices()]
-
-    for dev in devices:
+    for p in list_devices():
         try:
+            dev = InputDevice(p)
+
             if dev.info.vendor == TARGET_VENDOR and dev.info.product == TARGET_PRODUCT:
-                if "Surface Pen" in dev.name:
-                    print(f"🎯 Pen gefunden: {dev.name} ({dev.path})")
-                    return dev
+                print(f"🎯 Pen gefunden: {dev.name} ({dev.path})")
+                return dev
+
         except Exception:
             continue
 
@@ -65,7 +65,6 @@ def handle_device(dev):
                 if event.type != ecodes.EV_KEY:
                     continue
 
-                # nur key press
                 if event.value != 1:
                     continue
 
@@ -76,6 +75,10 @@ def handle_device(dev):
 
     except (OSError, IOError):
         print("⚠️ Gerät getrennt")
+        try:
+            dev.ungrab()
+        except Exception:
+            pass
 
 
 def main():
